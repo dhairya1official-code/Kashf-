@@ -1,0 +1,26 @@
+# Kashf OSINT Privacy Dashboard — Backend Dependencies
+# FastAPI & Server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+
+# HTTP & Scraping
+httpx==0.28.1
+beautifulsoup4==4.12.3
+lxml==5.3.0
+selenium==4.27.1
+webdriver-manager==4.0.2
+
+# AI — Local LLM Inference
+llama-cpp-python==0.3.4
+
+# Config & Utilities
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# Security
+cryptography==44.0.0
