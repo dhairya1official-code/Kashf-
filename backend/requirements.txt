@@ -6,17 +6,16 @@ python-multipart==0.0.20
 
 # Database
 sqlalchemy==2.0.36
-aiosqlite==0.20.0
-
+asyncpg==0.30.0
 # HTTP & Scraping
 httpx==0.28.1
+requests==2.32.3
 beautifulsoup4==4.12.3
 lxml==5.3.0
-selenium==4.27.1
-webdriver-manager==4.0.2
 
 # AI — Local LLM Inference
-llama-cpp-python==0.3.4
+# Note: llama-cpp-python removed for Vercel compatibility
+# (Vercel serverless has a 250MB limit and lacks C++ build tools)
 
 # Config & Utilities
 pydantic-settings==2.7.1

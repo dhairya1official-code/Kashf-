@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -51,9 +52,13 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("✅ Database initialized")
 
-    # Launch background auto-wipe task
-    wipe_task = asyncio.create_task(_auto_wipe_loop())
-    logger.info(f"🧹 Auto-wipe enabled (TTL: {settings.DATA_TTL_HOURS}h)")
+    # Launch background auto-wipe task locally, disable on Vercel
+    if not os.environ.get("VERCEL"):
+        wipe_task = asyncio.create_task(_auto_wipe_loop())
+        logger.info(f"🧹 Auto-wipe enabled (TTL: {settings.DATA_TTL_HOURS}h)")
+    else:
+        logger.info("⚡ Vercel environment detected – background auto-wipe disabled.")
+        wipe_task = None
 
     if settings.LLM_MODEL_PATH:
         logger.info(f"🧠 LLM model configured: {settings.LLM_MODEL_PATH}")
@@ -65,7 +70,8 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    wipe_task.cancel()
+    if wipe_task:
+        wipe_task.cancel()
     logger.info("👋 Kashf backend shutting down")
 
 

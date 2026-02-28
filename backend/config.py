@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     )
 
     # ── Database ──────────────────────────────────────────────────────
-    DATABASE_URL: str = "sqlite+aiosqlite:///./kashf.db"
+    # Using asyncpg for Vercel Postgres / Supabase
+    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/kashf"
 
     # ── API Keys (optional) ──────────────────────────────────────────
     HIBP_API_KEY: str = ""
