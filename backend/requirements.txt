@@ -14,8 +14,7 @@ beautifulsoup4==4.12.3
 lxml==5.3.0
 
 # AI — Local LLM Inference
-# Note: llama-cpp-python removed for Vercel compatibility
-# (Vercel serverless has a 250MB limit and lacks C++ build tools)
+llama-cpp-python==0.3.4
 
 # Config & Utilities
 pydantic-settings==2.7.1

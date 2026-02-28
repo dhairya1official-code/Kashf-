@@ -14,11 +14,11 @@ While standard tools just list links, our **Agentic AI model** (optimized for **
 3. **The Ghost:** Automatically generates and queues GDPR/CCPA-compliant takedown notices to data brokers.
 
 ## 🛠️ Tech Stack & Architecture
-- **Hosting (Vercel):** The React frontend and FastAPI backend are deployed on Vercel's serverless infrastructure for global reach and high availability.
+- **Hosting (Render):** The React frontend, FastAPI backend, and Managed PostgreSQL Database are natively deployed on Render's containerized infrastructure for robust, long-running processes.
 - **Frontend:** React, Tailwind CSS, **D3.js** (Interactive Footprint Mapping)
-- **Backend:** FastAPI (Python), PostgreSQL (Vercel Postgres/Supabase)
-- **Scouts OSINT:** BeautifulSoup4 & HTTPX (Optimized for Serverless Execution)
-- **AI/ML (Local Privacy):** Agentic LLM Architecture running entirely on **AMD Ryzen™ AI Hardware**. While the web app is hosted on Vercel, the "Hackathon Winning Feature" (Local LLM privacy analysis) executes solely on the user's local hardware to guarantee 100% data privacy.
+- **Backend:** FastAPI (Python), PostgreSQL (Render Managed Database)
+- **Scouts OSINT:** BeautifulSoup4 & HTTPX (Lightweight container scraping)
+- **AI/ML (Local Privacy):** Agentic LLM Architecture. While the web dashboard is hosted on Render, the "Hackathon Winning Feature" (Local LLM privacy analysis via `llama-cpp-python` and auto-wiping loops) executes continuously to guarantee 100% data privacy.
 - **Security:** OAuth 2.0 Identity Verification
 
 ## 👥 Meet the Team
