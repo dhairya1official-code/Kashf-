@@ -7,14 +7,15 @@ python-multipart==0.0.20
 # Database
 sqlalchemy==2.0.36
 asyncpg==0.30.0
+aiosqlite==0.20.0
 # HTTP & Scraping
 httpx==0.28.1
 requests==2.32.3
 beautifulsoup4==4.12.3
 lxml==5.3.0
 
-# AI — Local LLM Inference
-llama-cpp-python==0.3.4
+# AI — Local LLM Inference (optional; install manually for local GPU inference)
+# llama-cpp-python==0.3.4
 
 # Config & Utilities
 pydantic-settings==2.7.1

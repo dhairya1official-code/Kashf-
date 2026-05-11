@@ -38,6 +38,9 @@ services:
     region: ohio
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "./frontend/dist"
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set this to your kashf-backend Render URL, e.g. https://kashf-backend.onrender.com
     routes:
       # SPAs need this catch-all to load index.html for React Router
       - type: rewrite

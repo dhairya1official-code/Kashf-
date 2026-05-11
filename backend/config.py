@@ -26,11 +26,13 @@ class Settings(BaseSettings):
     def fix_postgres_scheme(cls, v: str | None) -> str:
         # Render provides `postgres://` which SQLAlchemy doesn't accept with asyncpg natively.
         if isinstance(v, str):
+            if v.startswith("sqlite"):
+                return v  # leave SQLite URLs untouched
             if v.startswith("postgres://"):
                 return v.replace("postgres://", "postgresql+asyncpg://", 1)
             if v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
                 return v.replace("postgresql://", "postgresql+asyncpg://", 1)
-        return v or "postgresql+asyncpg://user:password@localhost:5432/kashf"
+        return v or "sqlite+aiosqlite:///./kashf.db"
 
     # ── API Keys (optional) ──────────────────────────────────────────
     HIBP_API_KEY: str = ""

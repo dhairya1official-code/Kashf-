@@ -12,10 +12,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: "127.0.0.1",
     proxy: {
-      "/search": { target: "http://localhost:8000", changeOrigin: true },
-      "/results": { target: "http://localhost:8000", changeOrigin: true },
-      "/takedown": { target: "http://localhost:8000", changeOrigin: true },
+      "/search": { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/results": { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "/takedown": { target: "http://127.0.0.1:8000", changeOrigin: true },
     },
   },
 })
