@@ -6,7 +6,6 @@ services:
   - type: web
     name: kashf-backend
     env: python
-    plan: free
     region: ohio
     buildCommand: "./backend/build.sh"
     startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
