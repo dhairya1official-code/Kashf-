@@ -48,9 +48,12 @@ async def get_results(
     findings_out: list[FindingOut] = []
     for f in findings_db:
         data = None
+        error_msg = None
         if f.data_found:
             try:
-                data = json.loads(f.data_found)
+                raw = json.loads(f.data_found)
+                error_msg = raw.pop("_error", None)
+                data = raw if raw else None
             except json.JSONDecodeError:
                 data = {"raw": f.data_found}
 
@@ -62,6 +65,7 @@ async def get_results(
                 data_found=data,
                 risk_category=f.risk_category,
                 risk_score=f.risk_score,
+                error=error_msg,
             )
         )
 

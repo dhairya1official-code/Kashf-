@@ -24,7 +24,11 @@ class LinkedInScraper(BaseScraper):
 
         url = f"{self.base_url}/{query}"
         resp = await self._http_get(url)
-        if resp and resp.status_code == 200 and "page-not-found" not in resp.text.lower():
+        if resp is None:
+            return self._error("Request failed")
+        if self._is_auth_wall(resp):
+            return self._error("LinkedIn authwall — profile verification requires authentication")
+        if resp.status_code == 200 and "page-not-found" not in resp.text.lower():
             soup = BeautifulSoup(resp.text, "lxml")
             title = soup.find("title")
             name = title.get_text(strip=True).replace(" | LinkedIn", "") if title else query

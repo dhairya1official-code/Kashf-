@@ -11,4 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      "/search": { target: "http://localhost:8000", changeOrigin: true },
+      "/results": { target: "http://localhost:8000", changeOrigin: true },
+      "/takedown": { target: "http://localhost:8000", changeOrigin: true },
+    },
+  },
 })

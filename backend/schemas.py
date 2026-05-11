@@ -40,6 +40,7 @@ class FindingOut(BaseModel):
     data_found: dict[str, Any] | None = None
     risk_category: str | None = None
     risk_score: float = 0.0
+    error: str | None = None
 
 
 # ── Threat Report ─────────────────────────────────────────────────────

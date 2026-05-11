@@ -145,12 +145,15 @@ async def run_scan(task_id: str, query: str, query_type: str) -> None:
     # Store findings in DB
     async with AsyncSessionLocal() as session:
         for i, result in enumerate(results):
+            data_payload: dict = result.data.copy() if result.data else {}
+            if result.error:
+                data_payload["_error"] = result.error
             finding = Finding(
                 task_id=task_id,
                 platform=result.platform,
                 url=result.url,
                 found=1 if result.found else 0,
-                data_found=json.dumps(result.data) if result.data else None,
+                data_found=json.dumps(data_payload) if data_payload else None,
                 risk_category=result.risk_category,
                 risk_score=result.risk_score,
             )

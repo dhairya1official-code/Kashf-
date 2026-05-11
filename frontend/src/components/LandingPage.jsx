@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ResultsDashboard from "@/components/ResultsDashboard";
+
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 const stats = [
-    { value: "3,000+", label: "Platforms Scanned" },
+    { value: "20+", label: "Platforms Scanned" },
     { value: "< 60s", label: "Scan Time" },
     { value: "100%", label: "Local & Private" },
 ];
@@ -45,21 +48,105 @@ const features = [
 ];
 
 export default function LandingPage() {
-    const [email, setEmail] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [query, setQuery] = useState("");
+    const [scanPhase, setScanPhase] = useState("idle"); // "idle" | "scanning" | "complete"
+    const [taskId, setTaskId] = useState(null);
+    const [progress, setProgress] = useState(0);
+    const [scanResults, setScanResults] = useState(null);
+    const [error, setError] = useState(null);
+    const pollRef = useRef(null);
 
-    const handleSubmit = (e) => {
+    const queryType = query.includes("@") ? "email" : "username";
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!email.trim()) return;
+        const trimmed = query.trim();
+        if (!trimmed) return;
 
-        setIsSubmitting(true);
-        console.log("🔍 Initiating scan for:", email);
+        setError(null);
+        setScanPhase("scanning");
+        setProgress(0);
 
-        // Simulate processing — backend connection later
-        setTimeout(() => {
-            setIsSubmitting(false);
-        }, 2000);
+        try {
+            const res = await fetch(`${API_BASE}/search`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: trimmed, query_type: queryType }),
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.detail || `Server error ${res.status}`);
+            }
+            const data = await res.json();
+            setTaskId(data.task_id);
+        } catch (err) {
+            setError(err.message);
+            setScanPhase("idle");
+        }
     };
+
+    useEffect(() => {
+        if (!taskId) return;
+
+        const poll = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/results/${taskId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                setProgress(data.progress || 0);
+
+                if (data.status === "completed") {
+                    clearInterval(pollRef.current);
+                    setScanResults(data);
+                    setScanPhase("complete");
+                } else if (data.status === "failed") {
+                    clearInterval(pollRef.current);
+                    setError("Scan failed — please try again");
+                    setScanPhase("idle");
+                }
+            } catch {
+                // ignore transient polling errors
+            }
+        };
+
+        pollRef.current = setInterval(poll, 2000);
+        poll(); // immediate first check
+        return () => clearInterval(pollRef.current);
+    }, [taskId]);
+
+    const handleNewScan = () => {
+        clearInterval(pollRef.current);
+        setScanPhase("idle");
+        setTaskId(null);
+        setScanResults(null);
+        setProgress(0);
+        setError(null);
+    };
+
+    // ── Results view ──────────────────────────────────────────────────
+    if (scanPhase === "complete" && scanResults) {
+        return (
+            <div className="relative min-h-screen overflow-hidden font-sans">
+                <div className="orb orb-1" />
+                <div className="orb orb-2" />
+                <nav className="relative z-10 flex items-center justify-between px-6 py-5 md:px-12 lg:px-20">
+                    <div className="flex items-center gap-2.5">
+                        <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </div>
+                        <span className="font-display text-xl font-bold tracking-tight text-white">Kashf</span>
+                    </div>
+                </nav>
+                <ResultsDashboard results={scanResults} onNewScan={handleNewScan} />
+            </div>
+        );
+    }
+
+    // ── Landing page ──────────────────────────────────────────────────
+    const isScanning = scanPhase === "scanning";
 
     return (
         <div className="relative min-h-screen overflow-hidden font-sans">
@@ -81,7 +168,6 @@ export default function LandingPage() {
             {/* ===== Navbar ===== */}
             <nav className="relative z-10 flex items-center justify-between px-6 py-5 md:px-12 lg:px-20">
                 <div className="flex items-center gap-2.5">
-                    {/* Logo mark */}
                     <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
                             <circle cx="11" cy="11" r="8" />
@@ -133,7 +219,7 @@ export default function LandingPage() {
                     id="hero-subline"
                     className="mt-6 max-w-2xl text-center text-base leading-relaxed text-zinc-400 sm:text-lg md:text-xl"
                 >
-                    Enter your email to map your scattered footprint across the internet.
+                    Enter your email or username to map your scattered footprint across the internet.
                     <span className="hidden sm:inline"> See what the web knows about you — </span>
                     <span className="hidden sm:inline font-medium text-zinc-300">before someone else does.</span>
                 </p>
@@ -144,20 +230,19 @@ export default function LandingPage() {
                     onSubmit={handleSubmit}
                     className="relative mt-10 flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:gap-0"
                 >
-                    {/* Pulse ring around form */}
                     <div className="pulse-ring rounded-xl hidden sm:block" />
 
                     <div className="relative flex-1">
                         <Input
-                            id="email-input"
-                            type="email"
-                            placeholder="Enter your unique ID (email)..."
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            id="query-input"
+                            type="text"
+                            placeholder={isScanning ? `Scanning… ${progress}%` : "Email or username…"}
+                            value={isScanning ? "" : query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            disabled={isScanning}
                             required
-                            className="glow-input h-12 rounded-xl border-zinc-700/50 bg-zinc-900/80 pl-11 pr-4 text-sm text-white placeholder:text-zinc-500 backdrop-blur-sm sm:rounded-r-none sm:border-r-0 md:text-base"
+                            className="glow-input h-12 rounded-xl border-zinc-700/50 bg-zinc-900/80 pl-11 pr-4 text-sm text-white placeholder:text-zinc-500 backdrop-blur-sm sm:rounded-r-none sm:border-r-0 md:text-base disabled:opacity-60"
                         />
-                        {/* Email icon */}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -168,24 +253,24 @@ export default function LandingPage() {
                             strokeLinejoin="round"
                             className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
                         >
-                            <rect width="20" height="16" x="2" y="4" rx="2" />
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
                         </svg>
                     </div>
 
                     <Button
                         id="scan-button"
                         type="submit"
-                        disabled={isSubmitting}
-                        className="glow-button h-12 cursor-pointer rounded-xl px-7 text-sm font-semibold tracking-wide text-white sm:rounded-l-none md:text-base"
+                        disabled={isScanning || !query.trim()}
+                        className="glow-button h-12 cursor-pointer rounded-xl px-7 text-sm font-semibold tracking-wide text-white sm:rounded-l-none md:text-base disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {isSubmitting ? (
+                        {isScanning ? (
                             <span className="flex items-center gap-2">
                                 <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                 </svg>
-                                Scanning...
+                                Scanning…
                             </span>
                         ) : (
                             <span className="flex items-center gap-2">
@@ -199,13 +284,45 @@ export default function LandingPage() {
                     </Button>
                 </form>
 
+                {/* Progress bar */}
+                {isScanning && (
+                    <div className="mt-4 w-full max-w-xl">
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-800">
+                            <div
+                                className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <p className="mt-2 text-center text-xs text-zinc-500">
+                            Scanning 20 platforms for <span className="text-zinc-300">{query}</span>…
+                        </p>
+                    </div>
+                )}
+
+                {/* Query type hint */}
+                {!isScanning && query.trim() && (
+                    <p className="mt-2 text-xs text-zinc-600">
+                        Detected as{" "}
+                        <span className="text-indigo-400 font-medium">{queryType}</span>
+                    </p>
+                )}
+
+                {/* Error */}
+                {error && (
+                    <p className="mt-3 flex items-center gap-1.5 text-sm text-red-400">
+                        <span>⚠</span> {error}
+                    </p>
+                )}
+
                 {/* Privacy note */}
-                <p className="mt-4 flex items-center gap-1.5 text-xs text-zinc-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="size-3.5 text-emerald-500">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                    </svg>
-                    100% local processing. Your data never leaves your machine.
-                </p>
+                {!isScanning && (
+                    <p className="mt-4 flex items-center gap-1.5 text-xs text-zinc-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="size-3.5 text-emerald-500">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                        </svg>
+                        100% local processing. Your data never leaves your machine.
+                    </p>
+                )}
 
                 {/* ===== Stats Bar ===== */}
                 <div className="mt-16 grid w-full max-w-2xl grid-cols-3 gap-4 md:mt-20">
@@ -244,25 +361,18 @@ export default function LandingPage() {
                                 key={i}
                                 className="group relative flex flex-col gap-4 rounded-2xl border border-zinc-800/60 bg-zinc-900/40 p-6 backdrop-blur-sm transition-all duration-300 hover:border-indigo-500/30 hover:bg-zinc-900/60 hover:shadow-lg hover:shadow-indigo-500/5"
                             >
-                                {/* Icon */}
                                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 transition-colors group-hover:bg-indigo-500/20">
                                     {feat.icon}
                                 </div>
-
-                                {/* Step label */}
                                 <span className="font-mono text-xs text-zinc-600">
                                     0{i + 1}
                                 </span>
-
                                 <h3 className="font-display text-lg font-semibold text-white">
                                     The {feat.title}
                                 </h3>
-
                                 <p className="text-sm leading-relaxed text-zinc-400">
                                     {feat.desc}
                                 </p>
-
-                                {/* Hover glow */}
                                 <div className="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                             </div>
                         ))}

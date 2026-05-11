@@ -97,6 +97,25 @@ class BaseScraper(ABC):
             logger.debug(f"[{self.platform_name}] HEAD {url} failed: {exc}")
             return None
 
+    def _is_auth_wall(self, resp: httpx.Response) -> bool:
+        """Detect login walls, auth redirects, and bot-protection pages."""
+        final_url = str(resp.url).lower()
+        if any(m in final_url for m in (
+            "/login", "/authwall", "/signin", "accounts/login", "?next=", "auth/login"
+        )):
+            return True
+        sample = resp.text[:4000].lower()
+        return any(m in sample for m in (
+            "just a moment",            # Cloudflare
+            "cf-browser-verification",  # Cloudflare
+            "you must log in",
+            "log in or sign up",        # Facebook
+            "join now to see",          # LinkedIn
+            "authwall",                 # LinkedIn
+            "sign in to x",             # Twitter/X
+            "log into instagram",       # Instagram
+        ))
+
     async def close(self) -> None:
         if self._client and not self._client.is_closed:
             await self._client.aclose()
