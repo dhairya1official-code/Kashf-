@@ -1,14 +1,13 @@
 # Render Blueprint (Infrastructure as Code)
 # Automatically deploys PostgreSQL, FastAPI Backend, and React Frontend
 
-services:
-  # 1. PostgreSQL Database
-  - type: psql
-    name: kashf-db
+databases:
+  - name: kashf-db
     plan: free
     postgresMajorVersion: 16
 
-  # 2. FastAPI Backend
+services:
+  # 1. FastAPI Backend
   - type: web
     name: kashf-backend
     env: python
@@ -24,13 +23,13 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: HIBP_API_KEY
-        sync: false # Set in the Render dashboard manually!
+        sync: false
       - key: SHODAN_API_KEY
-        sync: false # Set in the Render dashboard manually!
+        sync: false
       - key: CORS_ORIGINS
-        value: "*" # Allow the frontend to reach it from Render's generated URL
+        value: "*"
 
-  # 3. React Frontend
+  # 2. React Frontend
   - type: web
     name: kashf-frontend
     env: static
@@ -40,9 +39,8 @@ services:
     staticPublishPath: "./frontend/dist"
     envVars:
       - key: VITE_API_URL
-        sync: false # Set this to your kashf-backend Render URL, e.g. https://kashf-backend.onrender.com
+        sync: false
     routes:
-      # SPAs need this catch-all to load index.html for React Router
       - type: rewrite
         source: /*
         destination: /index.html
